@@ -11,9 +11,6 @@ app.use(express.json())
 
 
 
-
-
-
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.flztkm6.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -34,15 +31,27 @@ async function run() {
     const database  = client.db("BistroDb")
     const menuCollection = database.collection("menu")
     const reviewCollection = database.collection("review")
+    const cartCollection = database.collection("carts")
 
 
     app.get('/menu' ,async(req,res)=>{
-
-          const result = await menuCollection.find().toArray()
+        const result = await menuCollection.find().toArray()
          res.send(result)
 
       })
 
+   app.get('/review' , async(req,res)=>{
+     const result = await reviewCollection.find().toArray()
+     res.send(result)
+  })   
+
+// cart collection 
+  app.post('/carts', async(req,res)=>{
+    const item =  req.body
+    console.log(item)
+     const result = await cartCollection.insertOne(item)
+      res.send(result)
+    })
 
 
 
