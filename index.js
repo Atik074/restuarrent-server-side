@@ -29,24 +29,50 @@ async function run() {
     // Send a ping to confirm a successful connection
    
     const database  = client.db("BistroDb")
+    const userCollection = database.collection("users")
     const menuCollection = database.collection("menu")
     const reviewCollection = database.collection("review")
     const cartCollection = database.collection("carts")
 
-
+  // menu collection APIs
     app.get('/menu' ,async(req,res)=>{
         const result = await menuCollection.find().toArray()
          res.send(result)
 
       })
 
+  // users collection APIs 
+
+  app.get("/users", async(req,res)=>{
+    const result = await userCollection.find().toArray()
+    res.send(result)
+  })
+
+  app.post("/users" , async(req ,res)=>{
+    const user = req.body 
+    const query ={email: user.email}
+    
+    const existingUser = await userCollection.findOne(query)
+     if(existingUser){
+        return res.send({message : 'user already added'})
+     }
+
+    const result = await userCollection.insertOne(user)
+    res.send(result)
+    
+   
+   })
+  
+
+
+
+  // review collection APIs 
    app.get('/review' , async(req,res)=>{
      const result = await reviewCollection.find().toArray()
      res.send(result)
   })   
 
 // cart collection APIs 
-
 app.get('/carts', async(req,res)=>{
   const email = req.query.email 
    if(!email){
@@ -65,7 +91,7 @@ app.get('/carts', async(req,res)=>{
       res.send(result)
     })
 
-// delete data from cart
+// delete collection APIs data 
    app.delete('/carts/:id', async(req,res)=>{
       const id = req.params.id 
       const query = {_id : new ObjectId(id)} 
