@@ -10,17 +10,18 @@ const cors = require('cors')
 app.use(cors())
 app.use(express.json())
 
-// jWT verify 
+// jWT verify  middleware
 
 const verifyJwt =(req,res,next) =>{
   const authorization = req.headers.authorization 
       if(!authorization){
         return res.status(401).send({error:true, message:'unauthorized access'})
       }
+      
   //bearer token
   const token = authorization.split(' ')[1]
-
-   jwt.verify(token , process.env.ACCESS_TOKEN_SECRETE , (err , decoded)=>{
+  
+   jwt.verify(token , process.env.ACCESS_TOKEN_SECRETE, (err , decoded)=>{
      
     if(err){
       return res.status(401).send({error:true , message:'unauthorized access'})
@@ -30,8 +31,6 @@ const verifyJwt =(req,res,next) =>{
 
   })
    
-
-
  }
 
 
@@ -64,7 +63,7 @@ async function run() {
 // jWt related APIs 
 app.post('/jwt' , (req,res)=>{
    const user = req.body 
-   const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRETE, { expiresIn: '1h' });
+   const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRETE, { expiresIn:'2h' });
    res.send({token})
 
  })
@@ -78,9 +77,26 @@ app.post('/jwt' , (req,res)=>{
 
       })
 
+
+  
+   // Warning: use verifyJWT before using verifyAdmin
+   const  verifyAdmin = async(req,res,next)=>{
+     const email = req.decoded.email
+     const query = {email: email} 
+     const user = await userCollection.findOne(query)
+      if(user?.role !== 'admin'){
+         return res.status(403).send({error:true , message:''})
+      }
+
+      next();
+
+   }
+  
+
+
   // users collection APIs 
 
-  app.get("/users", verifyJwt ,async(req,res)=>{
+  app.get("/users",verifyJwt ,verifyAdmin , async(req,res)=>{
     const result = await userCollection.find().toArray()
     res.send(result)
   })
@@ -98,7 +114,6 @@ app.post('/jwt' , (req,res)=>{
     res.send(result)
   
    })
-
 
 
   
@@ -139,28 +154,28 @@ app.post('/jwt' , (req,res)=>{
   })   
 
 // cart collection APIs 
-app.get('/carts', verifyJwt, async(req,res)=>{
-  const email = req.query.email 
-   if(!email){
-      res.send([]) }
+app.get('/carts', verifyJwt, async (req, res) => {
+  const email = req.query.email;
+ 
 
-      //verify jwt
-   const decodedEmail = req.decoded.emaill
-   if(email !== decodedEmail){
-    return res.status(403).send({error:true , message:'porviden access'})   
+  if (!email) {
+    res.send([]);
   }
 
+  const decodedEmail = req.decoded.email;
+  if (email !== decodedEmail) {
+    return res.status(403).send({ error: true, message: 'forbidden access' })
+  }
+
+  const query = { email: email };
+  const result = await cartCollection.find(query).toArray();
+  res.send(result);
+});
 
 
-   const query = {email : email}  
-   const result = await cartCollection.find(query).toArray()
-   res.send(result)
-
-  })
 
   app.post('/carts', async(req,res)=>{
     const item =  req.body
-    console.log(item)
      const result = await cartCollection.insertOne(item)
       res.send(result)
     })
