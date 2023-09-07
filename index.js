@@ -77,6 +77,13 @@ app.post('/jwt' , (req,res)=>{
 
       })
 
+   app.post('/menu',verifyJwt , verifyAdmin ,  async(req,res)=>{
+     const newItem = req.body 
+     const result = await menuCollection.insertOne(newItem)
+     res.send(result)
+
+       })
+
 
   
    // Warning: use verifyJWT before using verifyAdmin
