@@ -60,6 +60,10 @@ async function run() {
     const cartCollection = database.collection("carts")
 
 
+
+ 
+ 
+
 // jWt related APIs 
 app.post('/jwt' , (req,res)=>{
    const user = req.body 
@@ -70,6 +74,23 @@ app.post('/jwt' , (req,res)=>{
 
 
 
+   // Warning: use verifyJWT before using verifyAdmin
+   const  verifyAdmin = async(req,res,next)=>{
+    const email = req.decoded.email
+    const query = {email: email} 
+    const user = await userCollection.findOne(query)
+     if(user?.role !== 'admin'){
+        return res.status(403).send({error:true , message:''})
+     }
+
+     next();
+
+  }
+
+
+
+
+
   // menu collection APIs
     app.get('/menu' ,async(req,res)=>{
         const result = await menuCollection.find().toArray()
@@ -77,27 +98,20 @@ app.post('/jwt' , (req,res)=>{
 
       })
 
-   app.post('/menu',verifyJwt , verifyAdmin ,  async(req,res)=>{
+   app.post('/menu',verifyJwt , verifyAdmin , async(req,res)=>{
      const newItem = req.body 
      const result = await menuCollection.insertOne(newItem)
      res.send(result)
 
        })
 
-
-  
-   // Warning: use verifyJWT before using verifyAdmin
-   const  verifyAdmin = async(req,res,next)=>{
-     const email = req.decoded.email
-     const query = {email: email} 
-     const user = await userCollection.findOne(query)
-      if(user?.role !== 'admin'){
-         return res.status(403).send({error:true , message:''})
-      }
-
-      next();
-
-   }
+//TODO delete count zero fix korte hobe
+     app.delete('/menu/:id', async (req, res) => {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) }
+        const result = await menuCollection.deleteOne(query);
+        res.send(result);
+      })
   
 
 
@@ -136,6 +150,14 @@ app.post('/jwt' , (req,res)=>{
    const result = await userCollection.updateOne(filter , updatedoc)
          res.send(result)
 
+    })
+    //delete admin users APIs 
+    app.delete('/users/admin/:id' , async(req,res)=>{
+     const id = req.params.id 
+     const query = {_id : new ObjectId(id)} 
+     const result = await userCollection.deleteOne(query)
+     res.send(result)
+    
     })
 
    //secuirity layer :  cheak  verfyJWT token and email same and admin cheak
