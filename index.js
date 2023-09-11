@@ -210,6 +210,32 @@ app.get('/carts', verifyJwt, async (req, res) => {
       res.send(result)
     })
 
+ // create payment intent APIs  
+  app.post("/create-payment-intent", verifyJwt , async(req,res)=>{
+       const item = req.body
+       const price = item.totallPrice
+       const amount = price * 100 
+       const paymentIntent = await stripe.paymentIntents.create({
+          amount : amount ,
+          currency: 'usd' ,
+          payment_method_types:['card']
+      
+      })
+
+     res.send({
+         clientSecret: paymentIntent.client_secret
+    })
+  
+  
+  })  
+
+
+  app.get("/create-payment-intent" , async(req,res)=>{
+    const result = await cartCollection.find().toArray()
+    res.send(result)
+  })
+
+
 // delete collection APIs data 
    app.delete('/carts/:id', async(req,res)=>{
       const id = req.params.id 
